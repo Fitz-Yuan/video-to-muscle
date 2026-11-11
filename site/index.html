@@ -66,7 +66,7 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .tag em { font-style: normal; color: #e07f90; }
 .legend { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: flex; align-items: center; gap: 8px;
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #c9c6c0; }
-.legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.35), #c4697a 20%, #7a0f24); }
+.legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #e9e3e1, #b8080d); }
 .effort { position: absolute; left: 12px; bottom: 12px; top: auto; z-index: 2; width: 3px; height: 64px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
 .effort i { position: absolute; left: 0; right: 0; bottom: 0; background: #a8324a; transition: height 0.08s linear; }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
@@ -276,11 +276,11 @@ const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshSt
 floor.receiveShadow = true; scene.add(floor);
 const grid = { material: {} };  // (no line grid: the tiles carry the scale)
 
-const boneMat = new THREE.MeshPhysicalMaterial({ color: 0xeee7da, roughness: 0.42, metalness: 0.0, clearcoat: 0.35, clearcoatRoughness: 0.5, sheen: 0.3, sheenColor: new THREE.Color(0xffffff) });
+const boneMat = new THREE.MeshStandardMaterial({ color: 0xe6dfd0, roughness: 0.55, metalness: 0.0 });
 const ghostMat = new THREE.MeshStandardMaterial({ color: 0x6f97c4, roughness: 0.6, transparent: true, opacity: 0.32, depthWrite: false });
 // muscles in two layers: every muscle as a translucent white line, and the active ones drawn over it in red
 const musMat = new LineMaterial({ linewidth: 1.6, color: 0xffffff, transparent: true, opacity: 0.28, depthWrite: false });
-const actMat = new LineMaterial({ linewidth: 2.3, vertexColors: true });
+const actMat = new LineMaterial({ linewidth: 1.8, vertexColors: true, transparent: true, opacity: 0.92 });
 
 /* ---------- body model ---------- */
 let model = null, bodyGroups = [], musBuf = null, actBuf = null, musCol = null, segSites = null, segMus = null, sitesW = null;
@@ -310,7 +310,7 @@ async function loadModel() {
   const lg = new LineSegmentsGeometry();
   lg.setPositions(new Float32Array(segSites.length * 3));
   musBuf = lg.attributes.instanceStart.data;
-  const lines = new LineSegments2(lg, musMat); lines.frustumCulled = false; lines.renderOrder = 1; human.add(lines);
+  const lines = new LineSegments2(lg, musMat); lines.frustumCulled = false; lines.renderOrder = 1; lines.visible = false; human.add(lines);
   const ag = new LineSegmentsGeometry();
   ag.setPositions(new Float32Array(segSites.length * 3));
   ag.setColors(new Float32Array(segSites.length * 3).fill(0.5));
@@ -357,8 +357,8 @@ function setMuscles(P, Q, f, ps) {
   musBuf.needsUpdate = true;
   actBuf.array.set(A);
 }
-// active muscles: from a soft rose at low activation to deep wine red (linear RGB); below ON they are left to the white layer
-const ON = 0.06, LOW = [0.55, 0.13, 0.18], HOT = [0.20, 0.004, 0.022];
+// muscle colour by activation, as the results viewer: grey at rest -> red when fully active
+const ON = -1, LOW = [0.82, 0.79, 0.78], HOT = [0.72, 0.03, 0.05];
 function colourMuscles(f) {
   const mu = clip.meta.muscle_act, A = clip.a[mu.array].data, n = mu.muscles.length;
   const map = clip.musMap ??= (() => { const ix = new Map(mu.muscles.map((nm, i) => [nm, i])); return Int32Array.from(model.meta.muscles, m => ix.get(m.name) ?? -1); })();
@@ -367,7 +367,7 @@ function colourMuscles(f) {
     const k = map[segMus[i]];
     const v = k < 0 ? 0 : Math.min(1, A[f * n + k] / 254);
     if (v < ON) { P[6 * i + 3] = P[6 * i]; P[6 * i + 4] = P[6 * i + 1]; P[6 * i + 5] = P[6 * i + 2]; continue; }  // hidden: zero length
-    const u = Math.min(1, (v - ON) / 0.5);
+    const u = v;
     const r = LOW[0] + (HOT[0] - LOW[0]) * u, g = LOW[1] + (HOT[1] - LOW[1]) * u, b = LOW[2] + (HOT[2] - LOW[2]) * u;
     C[6 * i] = C[6 * i + 3] = r; C[6 * i + 1] = C[6 * i + 4] = g; C[6 * i + 2] = C[6 * i + 5] = b;
   }
