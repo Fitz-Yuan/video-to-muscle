@@ -31,6 +31,22 @@
    "video": "data/video/arm_raise.mp4",
    "poster": "data/video/arm_raise.jpg",
    "bytes": 1415568
+  },
+  {
+   "id": "walk_reach",
+   "title": "Walk and reach",
+   "group": "walk",
+   "seconds": 12.74,
+   "video_s": 12.8,
+   "fell_s": null,
+   "source": "our lab",
+   "source_url": "",
+   "width": 480,
+   "height": 854,
+   "file": "data/clips/walk_reach.elvw",
+   "video": "data/video/walk_reach.mp4",
+   "poster": "data/video/walk_reach.jpg",
+   "bytes": 2075360
   }
  ]
 }

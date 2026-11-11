@@ -10,20 +10,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #06080b;
-  --bg-2: #0b0f14;
-  --panel: #0d1218;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-2: rgba(255, 255, 255, 0.16);
-  --fg: #eef1f4;
-  --muted: #7d8794;
-  --dim: #4a535e;
-  --hot: #eb1a14;
-  --hot-2: #ffb36b;
+  --bg: #f4f2ed;
+  --bg-2: #ebe8e1;
+  --panel: #fbfaf7;
+  --line: rgba(40, 32, 24, 0.08);
+  --line-2: rgba(40, 32, 24, 0.17);
+  --fg: #1d1b18;
+  --muted: #6f6a62;
+  --dim: #9c968c;
+  --hot: #c4161c;
+  --hot-2: #e0663a;
   --cool: #5cc8ff;
   --font: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  color-scheme: dark;
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; }
@@ -34,8 +34,8 @@ button { font: inherit; color: inherit; }
 /* faint backdrop: a radial glow and a fine grid behind the stage */
 .backdrop { position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background:
-    radial-gradient(60% 50% at 70% 20%, rgba(255, 77, 46, 0.07), transparent 70%),
-    radial-gradient(50% 40% at 20% 10%, rgba(92, 200, 255, 0.05), transparent 70%); }
+    radial-gradient(60% 50% at 70% 15%, rgba(196, 22, 28, 0.05), transparent 70%),
+    radial-gradient(50% 40% at 20% 10%, rgba(120, 110, 95, 0.06), transparent 70%); }
 .backdrop::after { content: ""; position: absolute; inset: 0;
   background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
   background-size: 64px 64px; opacity: 0.35;
@@ -44,7 +44,7 @@ button { font: inherit; color: inherit; }
 header, main, footer { position: relative; z-index: 1; }
 header { display: flex; align-items: center; justify-content: space-between; padding: 18px clamp(16px, 4vw, 48px); }
 .mark { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
-.mark i { width: 7px; height: 7px; border-radius: 50%; background: var(--hot); box-shadow: 0 0 12px var(--hot); }
+.mark i { width: 7px; height: 7px; border-radius: 50%; background: var(--hot); }
 
 .hero { text-align: center; padding: clamp(4px, 1.5vh, 24px) 16px clamp(16px, 3vh, 32px); }
 .hero h1 { margin: 0; font-weight: 300; font-size: clamp(28px, 4.4vw, 56px); letter-spacing: -0.03em; line-height: 1.05; }
@@ -54,17 +54,17 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 /* ---- stage: input video | simulation ---- */
 .stage-wrap { padding: 0 clamp(16px, 4vw, 48px); }
 .stage { position: relative; display: flex; justify-content: center; gap: clamp(8px, 1.2vw, 16px); }
-.pane { position: relative; border-radius: 14px; overflow: hidden; background: #000; border: 1px solid var(--line);
-  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.9); }
-.pane.sim { background: #f5f5f2; border-color: rgba(255, 255, 255, 0.14); }
+.pane { position: relative; border-radius: 14px; overflow: hidden; background: var(--bg-2); border: 1px solid var(--line);
+  box-shadow: 0 24px 60px -28px rgba(40, 30, 20, 0.35); }
+.pane.sim { background: #e6e2da; }
 .pane video, .pane canvas { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pane canvas { touch-action: none; cursor: grab; }
 .tag { position: absolute; top: 12px; left: 12px; z-index: 2; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em;
   text-transform: uppercase; color: rgba(255, 255, 255, 0.78); padding: 6px 9px; border-radius: 6px;
-  background: rgba(6, 8, 11, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.08); }
-.tag em { font-style: normal; color: var(--hot); }
+  background: rgba(6, 8, 11, 0.62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.08); }
+.tag em { font-style: normal; color: #ff6b5e; }
 .legend { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #6b6b70; }
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #4a4945; }
 .legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #d1c9c7, #b8080d); }
 .effort { position: absolute; left: 12px; bottom: 12px; top: auto; z-index: 2; width: 3px; height: 64px; border-radius: 2px; background: rgba(0, 0, 0, 0.08); overflow: hidden; }
 .effort i { position: absolute; left: 0; right: 0; bottom: 0; background: #b8080d; transition: height 0.08s linear; }
@@ -75,17 +75,17 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 
 /* ---- transport ---- */
 .transport { display: flex; align-items: center; gap: 14px; max-width: 1180px; margin: 16px auto 0; padding: 0 2px; }
-.play { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line-2); background: rgba(255, 255, 255, 0.03);
+.play { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line-2); background: var(--panel);
   display: grid; place-items: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-.play:hover { border-color: var(--hot); background: rgba(255, 77, 46, 0.08); }
+.play:hover { border-color: var(--hot); background: rgba(196, 22, 28, 0.06); }
 .play svg { width: 14px; height: 14px; fill: var(--fg); }
 .scrub { position: relative; flex: 1; height: 28px; cursor: pointer; touch-action: none; }
 .scrub .rail { position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line-2); border-radius: 1px; }
 .scrub .fill { position: absolute; left: 0; top: 13px; height: 2px; background: linear-gradient(90deg, var(--hot), var(--hot-2)); border-radius: 1px; width: 0; }
-.scrub .knob { position: absolute; top: 8px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255, 77, 46, 0.25); left: 0; }
+.scrub .knob { position: absolute; top: 8px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--hot); box-shadow: 0 0 0 4px rgba(196, 22, 28, 0.18); left: 0; }
 .seg { display: flex; border: 1px solid var(--line-2); border-radius: 999px; padding: 3px; gap: 2px; flex: none; }
 .seg button { border: 0; background: none; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; color: var(--muted); letter-spacing: 0.02em; }
-.seg button.on { background: rgba(255, 255, 255, 0.09); color: var(--fg); }
+.seg button.on { background: rgba(40, 32, 24, 0.08); color: var(--fg); }
 .seg button:hover:not(.on) { color: var(--fg); }
 
 /* ---- clip strip ---- */
@@ -96,8 +96,8 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .card { position: relative; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); cursor: pointer;
   padding: 0; text-align: left; transition: border-color 0.2s, transform 0.2s; }
 .card:hover { border-color: var(--line-2); transform: translateY(-2px); }
-.card.on { border-color: rgba(255, 77, 46, 0.7); box-shadow: 0 0 0 1px rgba(255, 77, 46, 0.35), 0 10px 30px -12px rgba(255, 77, 46, 0.45); }
-.card img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; filter: saturate(0.85) brightness(0.88); transition: filter 0.2s; }
+.card.on { border-color: rgba(196, 22, 28, 0.7); box-shadow: 0 0 0 1px rgba(196, 22, 28, 0.3), 0 10px 30px -14px rgba(196, 22, 28, 0.4); }
+.card img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; filter: saturate(0.85); transition: filter 0.2s; }
 .card:hover img, .card.on img { filter: none; }
 .card span { display: block; padding: 10px 12px 11px; font-size: 13px; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -105,10 +105,10 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .how { max-width: 1180px; margin: clamp(56px, 10vh, 110px) auto 0; padding: 0 clamp(16px, 4vw, 48px); box-sizing: content-box; }
 .how h2 { margin: 0 0 26px; font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); text-align: center; }
 .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
-.steps::before { content: ""; position: absolute; left: 12.5%; right: 12.5%; top: 27px; height: 1px; background: linear-gradient(90deg, var(--line-2), rgba(255, 77, 46, 0.6)); }
+.steps::before { content: ""; position: absolute; left: 12.5%; right: 12.5%; top: 27px; height: 1px; background: linear-gradient(90deg, var(--line-2), rgba(196, 22, 28, 0.55)); }
 .step { text-align: center; padding: 0 10px; position: relative; }
 .step .ic { width: 54px; height: 54px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: var(--bg); border: 1px solid var(--line-2); position: relative; }
-.step:last-child .ic { border-color: rgba(255, 77, 46, 0.7); box-shadow: 0 0 24px -4px rgba(255, 77, 46, 0.5); }
+.step:last-child .ic { border-color: rgba(196, 22, 28, 0.7); box-shadow: 0 0 20px -6px rgba(196, 22, 28, 0.45); }
 .step svg { width: 22px; height: 22px; stroke: var(--fg); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .step h3 { margin: 0; font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
 .step p { margin: 6px auto 0; max-width: 210px; font-size: 13px; line-height: 1.5; color: var(--muted); }
@@ -231,8 +231,8 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 paneSim.prepend(renderer.domElement);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf5f5f2);
-scene.fog = new THREE.Fog(0xf5f5f2, 8, 30);
+scene.background = new THREE.Color(0xe6e2da);
+scene.fog = new THREE.Fog(0xe6e2da, 8, 30);
 const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 200);
 camera.up.set(0, 0, 1);
 camera.position.set(3, -3.5, 1.6);
@@ -251,9 +251,9 @@ const rim = new THREE.DirectionalLight(0x9fc4ff, 0.35); scene.add(rim);  // cool
 const rimB = new THREE.DirectionalLight(0xffffff, 0.0); scene.add(rimB);
 
 // floor: a soft shadow catcher and a fine grid that fades into the fog
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.13 }));
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.18 }));
 floor.receiveShadow = true; scene.add(floor);
-const grid = new THREE.GridHelper(200, 400, 0xe6e6e1, 0xe6e6e1);
+const grid = new THREE.GridHelper(200, 400, 0xd3cec4, 0xd3cec4);
 grid.rotation.x = Math.PI / 2; grid.position.z = 0.001;
 grid.material.transparent = true; grid.material.opacity = 0.6; scene.add(grid);
 
