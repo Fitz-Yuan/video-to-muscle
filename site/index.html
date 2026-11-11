@@ -6,8 +6,6 @@
 <title>Video to Muscle</title>
 <meta name="description" content="Everyday video reproduced in physics by a muscle-driven full-body policy.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307090c'/%3E%3Cpath d='M9 22c3-9 11-9 14 0' stroke='%23ff4d2e' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #f4f2ed;
@@ -125,6 +123,52 @@ footer { max-width: 1180px; margin: clamp(56px, 10vh, 110px) auto 0; padding: 22
   .steps::before { display: none; }
   .strip { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ---- TERRA-like look (white page, Charter serif, quiet lines) ---- */
+@font-face { font-family: Charter; src: url("fonts/charter_regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: Charter; src: url("fonts/charter_bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: Charter; src: url("fonts/charter_italic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+:root {
+  --bg: #ffffff; --bg-2: #eef2f0; --panel: #f6f8f6;
+  --line: #dfe5e1; --line-2: #c4cec7;
+  --fg: #26332f; --muted: #64716b; --dim: #8b968f;
+  --hot: #9e2a1f; --hot-2: #9e2a1f;
+  --font: Charter, "Bitstream Charter", Georgia, "Times New Roman", serif;
+  --mono: Charter, "Bitstream Charter", Georgia, serif;
+  color-scheme: light;
+}
+.backdrop { display: none; }
+.mark { letter-spacing: 0.08em; font-size: 15px; text-transform: none; color: var(--fg); }
+.mark i { display: none; }
+.hero h1 { font-weight: 700; letter-spacing: -0.01em; }
+.hero h1 b { font-weight: 700; background: none; -webkit-background-clip: initial; background-clip: initial; color: var(--hot); }
+.hero p { color: var(--muted); }
+.pane { border-color: var(--line); box-shadow: none; border-radius: 8px; }
+.pane.sim { background: #a9b5c2; }
+.tag { font-size: 13px; letter-spacing: 0.04em; text-transform: none; color: var(--fg); background: rgba(255, 255, 255, 0.85); border-color: var(--line); }
+.tag em { color: var(--hot); }
+.legend { font-size: 12px; letter-spacing: 0.04em; text-transform: none; color: #2f3b45; }
+.legend span.bar { background: linear-gradient(90deg, #ef9f8d, #9e2119); }
+.effort { background: rgba(0, 0, 0, 0.1); }
+.effort i { background: #9e2119; }
+.play { background: #fff; border-color: var(--line-2); }
+.play:hover { border-color: var(--fg); background: var(--panel); }
+.scrub .fill { background: var(--fg); }
+.scrub .knob { background: var(--fg); box-shadow: 0 0 0 4px rgba(38, 51, 47, 0.15); }
+.seg { border-color: var(--line); }
+.seg button { font-size: 15px; line-height: 1.2; padding: 5px 14px; }
+.seg button.on { background: var(--fg); color: #fff; }
+.clips-head h2, .how h2 { font-size: 13px; letter-spacing: 0.12em; }
+.card { background: var(--panel); border-color: var(--line); border-radius: 8px; }
+.card span { font-size: 15px; }
+.card.on { border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg); }
+.card img { filter: none; }
+.steps::before { background: var(--line-2); }
+.step .ic { background: #fff; border-color: var(--line-2); }
+.step:last-child .ic { border-color: var(--hot); box-shadow: none; }
+.step h3 { font-weight: 700; font-size: 17px; }
+.step p { font-size: 15px; }
+footer { color: var(--muted); font-size: 14px; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -235,8 +279,8 @@ paneSim.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 // sky: a dome with a vertical gradient in world space (dark zenith -> lighter horizon); the ground fades into the
 // same horizon colour, so the horizon stays soft whatever the camera's tilt
-const HORIZON = 0x50545b, ZENITH = 0x121417;
-scene.fog = new THREE.Fog(HORIZON, 14, 70);
+const HORIZON = 0xb2bdc8, ZENITH = 0x7d8a99;
+scene.fog = new THREE.Fog(HORIZON, 12, 60);
 const sky = new THREE.Mesh(new THREE.SphereGeometry(300, 32, 16), new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite: false, fog: false,
   uniforms: { top: { value: new THREE.Color(ZENITH) }, bottom: { value: new THREE.Color(HORIZON) } },
@@ -252,7 +296,7 @@ controls.target.set(0, 0, 0.95);
 controls.enableDamping = true;
 controls.enabled = false;
 
-const hemi = new THREE.HemisphereLight(0xe4ebf3, 0x45403a, 1.05); hemi.up = new THREE.Vector3(0, 0, 1); hemi.position.set(0, 0, 1); scene.add(hemi);
+const hemi = new THREE.HemisphereLight(0xf2f5f8, 0x7f8a95, 1.35); hemi.up = new THREE.Vector3(0, 0, 1); hemi.position.set(0, 0, 1); scene.add(hemi);
 const key = new THREE.DirectionalLight(0xffffff, 1.6);
 key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
 Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 0.5, far: 20 });
@@ -261,26 +305,25 @@ scene.add(key, key.target);
 const rim = new THREE.DirectionalLight(0xf3f6ff, 1.3); scene.add(rim);  // back light: a bright outline on the silhouette
 const rimB = new THREE.DirectionalLight(0xffffff, 0.0); scene.add(rimB);
 
-// floor: grey checker tiles (0.5 m, as the MuJoCo renders), lit and shadowed, fading into the horizon
+// floor: light blue-grey with a 1 m grid, lit and shadowed, fading into the horizon
 const tile = (() => {
   const c = document.createElement("canvas"); c.width = c.height = 256;
   const g = c.getContext("2d");
-  g.fillStyle = "#666a70"; g.fillRect(0, 0, 256, 256);
-  g.fillStyle = "#5c6066"; g.fillRect(0, 0, 128, 128); g.fillRect(128, 128, 128, 128);
-  g.strokeStyle = "rgba(255,255,255,0.05)"; g.lineWidth = 2; g.strokeRect(0, 0, 256, 256);
+  g.fillStyle = "#d3dbe3"; g.fillRect(0, 0, 256, 256);              // light blue-grey floor, 1 m grid lines
+  g.strokeStyle = "#a3afbc"; g.lineWidth = 3; g.strokeRect(0, 0, 256, 256);
   const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(200, 200); t.anisotropy = 8; t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(100, 100); t.anisotropy = 8; t.colorSpace = THREE.SRGBColorSpace;
   return t;
 })();
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ map: tile, roughness: 0.92, metalness: 0 }));
 floor.receiveShadow = true; scene.add(floor);
 const grid = { material: {} };  // (no line grid: the tiles carry the scale)
 
-const boneMat = new THREE.MeshStandardMaterial({ color: 0xe6dfd0, roughness: 0.55, metalness: 0.0 });
+const boneMat = new THREE.MeshStandardMaterial({ color: 0xeeece6, roughness: 0.6, metalness: 0.0 });
 const ghostMat = new THREE.MeshStandardMaterial({ color: 0x6f97c4, roughness: 0.6, transparent: true, opacity: 0.32, depthWrite: false });
 // muscles in two layers: every muscle as a translucent white line, and the active ones drawn over it in red
 const musMat = new LineMaterial({ linewidth: 1.6, color: 0xffffff, transparent: true, opacity: 0.28, depthWrite: false });
-const actMat = new LineMaterial({ linewidth: 1.8, vertexColors: true, transparent: true, opacity: 0.92 });
+const actMat = new LineMaterial({ linewidth: 2.6, vertexColors: true });
 
 /* ---------- body model ---------- */
 let model = null, bodyGroups = [], musBuf = null, actBuf = null, musCol = null, segSites = null, segMus = null, sitesW = null;
@@ -359,7 +402,7 @@ function setMuscles(P, Q, f, ps) {
 }
 // muscle colour by activation, as the results viewer: grey at rest -> red when fully active. Blended in display (sRGB)
 // space and converted to the renderer's linear space, so mid activations read as red rather than washed-out pink.
-const ON = -1, LOW = [0.84, 0.81, 0.80], HOT = [0.50, 0.07, 0.10];  // grey -> muted deep red
+const ON = -1, LOW = [0.94, 0.63, 0.56], HOT = [0.60, 0.11, 0.09];  // salmon at rest -> muted deep red
 const toLin = c => Math.pow(c, 2.2);
 function colourMuscles(f) {
   const mu = clip.meta.muscle_act, n = mu.muscles.length;
