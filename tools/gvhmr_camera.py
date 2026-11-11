@@ -5,7 +5,9 @@ GVHMR gives the body twice: in the camera frame (smpl_params_incam) and in a gra
 (smpl_params_global). The root orientation gives the camera rotation, R_cw = R_incam R_global^T, and the pelvis
 joint (transl + rest pelvis J0; the root rotates about it) gives the camera centre c = p_world - R_cw^T p_cam.
 cam_to_pelvis (= R_cw^T p_cam) is the camera->pelvis vector as the image sees it; the site anchors the camera on
-the simulated reference's pelvis with it, so the pelvis lands where it is in the video. Both are then mapped to Z-up exactly as smpl_to_amass_npz.py maps the motion ((x, y, z) -> (x, -z, y)).
+the simulated reference's pelvis with it, so the pelvis lands where it is in the video; that vector
+is scaled by the body-size ratio (pelvis-over-ankle height, simulated body / person, pelvis_ankle) so the body also
+looks as large as the person. Both are then mapped to Z-up exactly as smpl_to_amass_npz.py maps the motion ((x, y, z) -> (x, -z, y)).
 OpenCV camera axes: +z looks forward, -y is up. Vertical field of view from K_fullimg.
 
 Run with GVHMR's python from GVHMR's folder (needs hmr4d + smplx):
@@ -27,6 +29,9 @@ betas = g["betas"].float().mean(0, keepdim=True)
 z = lambda n: torch.zeros(1, n)  # noqa: E731
 with torch.no_grad():
   J0 = make_smplx("supermotion")(body_pose=z(63), betas=betas, global_orient=z(3), transl=z(3)).joints[0, 0].double().numpy()
+with torch.no_grad():  # pelvis-over-ankle height of the person (world, Y-up), to match the simulated body's size
+  Jg = make_smplx("supermotion")(**{k: v.float() for k, v in g.items()}).joints.double().numpy()
+pelvis_ankle = Jg[:, 0, 1] - Jg[:, [7, 8], 1].mean(1)
 Rg = sR.from_rotvec(g["global_orient"].double().numpy())
 Rc = sR.from_rotvec(c["global_orient"].double().numpy())
 Rcw = Rc * Rg.inv()                          # world (Y-up) -> camera
@@ -42,7 +47,7 @@ wh = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_
 W, H = int(wh[0]), int(wh[1])
 fov = float(np.degrees(2 * np.arctan(H / 2 / K[1, 1])))
 np.savez(out, cam_pos=Z.apply(cen), cam_fwd=Z.apply(fwd), cam_up=Z.apply(up), pelvis=Z.apply(pw),
-         cam_to_pelvis=Z.apply(Rcw.inv().apply(pc)),
+         cam_to_pelvis=Z.apply(Rcw.inv().apply(pc)), pelvis_ankle=pelvis_ankle,
          fov_deg=fov, width=W, height=H, fps=30.0)
 print(f"{out}: {len(cen)} frames, fov {fov:.1f} deg, {W}x{H}, camera height {Z.apply(cen)[:, 2].mean():.2f} m "
       f"(pelvis {Z.apply(pw)[:, 2].mean():.2f} m), distance {np.linalg.norm(cen - pw, axis=1).mean():.2f} m")

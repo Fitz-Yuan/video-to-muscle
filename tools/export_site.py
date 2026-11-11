@@ -94,8 +94,15 @@ def main():
   interp = lambda A: np.stack([np.interp(t, np.arange(len(A)) / 30.0, A[:, k]) for k in range(3)], 1)  # noqa: E731
   # anchor the camera on the reference pelvis (root) with the camera->pelvis vector of the in-camera estimate
   if "cam_to_pelvis" in cam.files:
-    cpos = smooth(rp[idx] - interp(cam["cam_to_pelvis"]), 11)
+    k = 1.0
+    if "pelvis_ankle" in cam.files:  # body-size ratio: simulated body / person (pelvis over the ankles, median)
+      tb = [str(b) for b in mo["tracked_bodies"]]
+      g = mo["gts"][st:st + int(mo["motion_num_frames"][0])]
+      ank = [i for i, b in enumerate(tb) if b.startswith("talus")]
+      k = float(np.median(g[:, tb.index("pelvis"), 2] - g[:, ank, 2].mean(1)) / np.median(cam["pelvis_ankle"]))
+    cpos = smooth(rp[idx] - k * interp(cam["cam_to_pelvis"]), 11)
   else:
+    k = 1.0
     cpos = smooth(interp(cam["cam_pos"] + shift), 11)
   cfwd = smooth(interp(cam["cam_fwd"]), 11)
   cup = smooth(interp(cam["cam_up"]), 11)
@@ -136,7 +143,7 @@ def main():
   cat["clips"] = [c for c in cat["clips"] if c["id"] != a.id] + [info]
   json.dump(cat, open(cat_path, "w"), indent=1)
   print(f"{a.id}: {len(idx)} frames, {'fell at %.2f s' % fell if fell else 'no fall'}, {size / 1e6:.2f} MB, "
-        f"camera shift {np.round(shift, 2)}, fov {float(cam['fov_deg']):.1f}")
+        f"camera shift {np.round(shift, 2)}, size ratio {k:.3f}, fov {float(cam['fov_deg']):.1f}")
 
 
 if __name__ == "__main__":
