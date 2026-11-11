@@ -57,7 +57,7 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .stage { position: relative; display: flex; justify-content: center; gap: clamp(8px, 1.2vw, 16px); }
 .pane { position: relative; border-radius: 14px; overflow: hidden; background: var(--bg-2); border: 1px solid var(--line);
   box-shadow: 0 24px 60px -28px rgba(40, 30, 20, 0.35); }
-.pane.sim { background: #e6e2da; }
+.pane.sim { background: #3b3c3f; }
 .pane video, .pane canvas { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pane canvas { touch-action: none; cursor: grab; }
 .tag { position: absolute; top: 12px; left: 12px; z-index: 2; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em;
@@ -65,10 +65,10 @@ header { display: flex; align-items: center; justify-content: space-between; pad
   background: rgba(6, 8, 11, 0.62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.08); }
 .tag em { font-style: normal; color: #ff6b5e; }
 .legend { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #4a4945; }
-.legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #d1c9c7, #b8080d); }
-.effort { position: absolute; left: 12px; bottom: 12px; top: auto; z-index: 2; width: 3px; height: 64px; border-radius: 2px; background: rgba(0, 0, 0, 0.08); overflow: hidden; }
-.effort i { position: absolute; left: 0; right: 0; bottom: 0; background: #b8080d; transition: height 0.08s linear; }
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #c9c6c0; }
+.legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #d1c9c7, #e0262c); }
+.effort { position: absolute; left: 12px; bottom: 12px; top: auto; z-index: 2; width: 3px; height: 64px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.effort i { position: absolute; left: 0; right: 0; bottom: 0; background: #e0262c; transition: height 0.08s linear; }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
 .loading.on { opacity: 1; }
 .loading i { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.12); border-top-color: var(--hot); animation: spin 0.8s linear infinite; }
@@ -232,8 +232,8 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 paneSim.prepend(renderer.domElement);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xe6e2da);
-scene.fog = new THREE.Fog(0xe6e2da, 8, 30);
+scene.background = new THREE.Color(0x3b3c3f);
+scene.fog = new THREE.Fog(0x3b3c3f, 8, 30);
 const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 200);
 camera.up.set(0, 0, 1);
 camera.position.set(3, -3.5, 1.6);
@@ -252,9 +252,9 @@ const rim = new THREE.DirectionalLight(0x9fc4ff, 0.35); scene.add(rim);  // cool
 const rimB = new THREE.DirectionalLight(0xffffff, 0.0); scene.add(rimB);
 
 // floor: a soft shadow catcher and a fine grid that fades into the fog
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.18 }));
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.35 }));
 floor.receiveShadow = true; scene.add(floor);
-const grid = new THREE.GridHelper(200, 400, 0xd3cec4, 0xd3cec4);
+const grid = new THREE.GridHelper(200, 400, 0x4d4f53, 0x4d4f53);
 grid.rotation.x = Math.PI / 2; grid.position.z = 0.001;
 grid.material.transparent = true; grid.material.opacity = 0.6; scene.add(grid);
 
@@ -372,20 +372,27 @@ async function openClip(e) {
   try { history.replaceState(null, "", `#${e.id}`); } catch {}
 }
 
-/* ---------- layout: both panes take the video's aspect, side by side (stacked on phones) ---------- */
+/* ---------- layout: the video keeps its own aspect; the simulation pane takes the rest of the row
+   (same height, at least as wide as the video), so the stage spans the content width. Stacked on phones. ---------- */
 function layout() {
-  const aspect = clip ? clip.meta.aspect : 16 / 9;
-  const st = $("stage"), W = st.clientWidth, narrow = innerWidth <= 760, gap = narrow ? 8 : Math.min(16, 0.012 * innerWidth);
+  const aspect = clip ? clip.meta.aspect : 9 / 16;
+  const st = $("stage"), narrow = innerWidth <= 760, gap = narrow ? 8 : Math.min(16, 0.012 * innerWidth);
+  const W = Math.min(st.clientWidth, 1180);
   // fit the stage and the transport row in the window below the stage's top (at least 360 px)
   const top = st.getBoundingClientRect().top + scrollY;
   const maxH = narrow ? 0.62 * innerHeight : Math.max(360, Math.min(innerHeight - top - 84, 680));
-  let w = narrow ? W : (W - gap) / 2, h = w / aspect;
-  if (h > maxH) { h = maxH; w = h * aspect; }
-  for (const p of [paneVideo, paneSim]) { p.style.width = `${w}px`; p.style.height = `${h}px`; }
-  renderer.setSize(w, h, false);
-  renderer.domElement.style.width = `${w}px`; renderer.domElement.style.height = `${h}px`;
-  musMat.resolution.set(w, h);
-  camera.aspect = w / h; camera.updateProjectionMatrix();
+  let vw, vh, sw, sh;
+  if (narrow) { vw = sw = W; vh = sh = W / aspect; if (vh > maxH) { vh = sh = maxH; vw = sw = maxH * aspect; } }
+  else {
+    vh = Math.min(maxH, (W - gap) / 2 / aspect);  // the video at most half the row
+    vw = vh * aspect; sh = vh; sw = W - gap - vw;
+  }
+  paneVideo.style.width = `${vw}px`; paneVideo.style.height = `${vh}px`;
+  paneSim.style.width = `${sw}px`; paneSim.style.height = `${sh}px`;
+  renderer.setSize(sw, sh, false);
+  renderer.domElement.style.width = `${sw}px`; renderer.domElement.style.height = `${sh}px`;
+  musMat.resolution.set(sw, sh);
+  camera.aspect = sw / sh; camera.updateProjectionMatrix();
 }
 addEventListener("resize", layout);
 
