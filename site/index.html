@@ -47,9 +47,9 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .mark i { width: 7px; height: 7px; border-radius: 50%; background: var(--hot); }
 
 .hero { text-align: center; padding: clamp(4px, 1.5vh, 24px) 16px clamp(16px, 3vh, 32px); }
-.hero h1 { margin: 0; font-weight: 400; font-size: clamp(28px, 3.5vw, 64px); letter-spacing: -0.035em; line-height: 1.08; white-space: nowrap; }
+.hero h1 { margin: 0; font-weight: 600; font-size: clamp(28px, 3.5vw, 64px); letter-spacing: -0.035em; line-height: 1.08; white-space: nowrap; }
 @media (max-width: 900px) { .hero h1 { white-space: normal; text-wrap: balance; font-size: clamp(28px, 6.5vw, 44px); } }
-.hero h1 b { font-weight: 600; background: linear-gradient(90deg, var(--hot), var(--hot-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero h1 b { font-weight: 700; background: linear-gradient(90deg, var(--hot), var(--hot-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hero p { margin: 16px auto 0; max-width: 820px; color: var(--muted); font-size: clamp(15px, 1.4vw, 20px); line-height: 1.5; font-weight: 400; text-wrap: balance; }
 
 /* ---- stage: input video | simulation ---- */
@@ -57,7 +57,7 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .stage { position: relative; display: flex; justify-content: center; gap: clamp(8px, 1.2vw, 16px); }
 .pane { position: relative; border-radius: 14px; overflow: hidden; background: var(--bg-2); border: 1px solid var(--line);
   box-shadow: 0 24px 60px -28px rgba(40, 30, 20, 0.35); }
-.pane.sim { background: #3b3c3f; }
+.pane.sim { background: #2a2d32; }
 .pane video, .pane canvas { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pane canvas { touch-action: none; cursor: grab; }
 .tag { position: absolute; top: 12px; left: 12px; z-index: 2; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em;
@@ -229,12 +229,22 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 1.12;
+renderer.setClearColor(0x000000, 0);
 paneSim.prepend(renderer.domElement);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x3b3c3f);
-scene.fog = new THREE.Fog(0x3b3c3f, 8, 30);
-const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 200);
+// sky: a dome with a vertical gradient in world space (dark zenith -> lighter horizon); the ground fades into the
+// same horizon colour, so the horizon stays soft whatever the camera's tilt
+const HORIZON = 0x50545b, ZENITH = 0x121417;
+scene.fog = new THREE.Fog(HORIZON, 14, 70);
+const sky = new THREE.Mesh(new THREE.SphereGeometry(300, 32, 16), new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite: false, fog: false,
+  uniforms: { top: { value: new THREE.Color(ZENITH) }, bottom: { value: new THREE.Color(HORIZON) } },
+  vertexShader: "varying vec3 vW; void main() { vW = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+  fragmentShader: "uniform vec3 top; uniform vec3 bottom; varying vec3 vW; void main() { float h = clamp(vW.z, 0.0, 1.0); gl_FragColor = vec4(mix(bottom, top, pow(smoothstep(0.0, 0.55, h), 0.7)), 1.0);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}",
+}));
+sky.frustumCulled = false; scene.add(sky);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 800);
 camera.up.set(0, 0, 1);
 camera.position.set(3, -3.5, 1.6);
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -242,25 +252,33 @@ controls.target.set(0, 0, 0.95);
 controls.enableDamping = true;
 controls.enabled = false;
 
-const hemi = new THREE.HemisphereLight(0xffffff, 0xcfc9bf, 1.25); hemi.up = new THREE.Vector3(0, 0, 1); hemi.position.set(0, 0, 1); scene.add(hemi);
+const hemi = new THREE.HemisphereLight(0xe4ebf3, 0x45403a, 1.05); hemi.up = new THREE.Vector3(0, 0, 1); hemi.position.set(0, 0, 1); scene.add(hemi);
 const key = new THREE.DirectionalLight(0xffffff, 1.6);
 key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
 Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 0.5, far: 20 });
-key.shadow.bias = -0.0004;
+key.shadow.bias = -0.0004; key.shadow.radius = 4;
 scene.add(key, key.target);
-const rim = new THREE.DirectionalLight(0x9fc4ff, 0.35); scene.add(rim);  // cool fill, as the results viewer
+const rim = new THREE.DirectionalLight(0xf3f6ff, 1.3); scene.add(rim);  // back light: a bright outline on the silhouette
 const rimB = new THREE.DirectionalLight(0xffffff, 0.0); scene.add(rimB);
 
-// floor: a soft shadow catcher and a fine grid that fades into the fog
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.35 }));
+// floor: grey checker tiles (0.5 m, as the MuJoCo renders), lit and shadowed, fading into the horizon
+const tile = (() => {
+  const c = document.createElement("canvas"); c.width = c.height = 256;
+  const g = c.getContext("2d");
+  g.fillStyle = "#666a70"; g.fillRect(0, 0, 256, 256);
+  g.fillStyle = "#5c6066"; g.fillRect(0, 0, 128, 128); g.fillRect(128, 128, 128, 128);
+  g.strokeStyle = "rgba(255,255,255,0.05)"; g.lineWidth = 2; g.strokeRect(0, 0, 256, 256);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(200, 200); t.anisotropy = 8; t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+})();
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ map: tile, roughness: 0.92, metalness: 0 }));
 floor.receiveShadow = true; scene.add(floor);
-const grid = new THREE.GridHelper(200, 400, 0x4d4f53, 0x4d4f53);
-grid.rotation.x = Math.PI / 2; grid.position.z = 0.001;
-grid.material.transparent = true; grid.material.opacity = 0.6; scene.add(grid);
+const grid = { material: {} };  // (no line grid: the tiles carry the scale)
 
-const boneMat = new THREE.MeshStandardMaterial({ color: 0xe6dfd0, roughness: 0.55, metalness: 0.0 });
+const boneMat = new THREE.MeshPhysicalMaterial({ color: 0xeee7da, roughness: 0.42, metalness: 0.0, clearcoat: 0.35, clearcoatRoughness: 0.5, sheen: 0.3, sheenColor: new THREE.Color(0xffffff) });
 const ghostMat = new THREE.MeshStandardMaterial({ color: 0x6f97c4, roughness: 0.6, transparent: true, opacity: 0.32, depthWrite: false });
-const musMat = new LineMaterial({ linewidth: 1.8, vertexColors: true, transparent: true, opacity: 0.92 });
+const musMat = new LineMaterial({ linewidth: 2.1, vertexColors: true, transparent: true, opacity: 0.95 });
 
 /* ---------- body model ---------- */
 let model = null, bodyGroups = [], musBuf = null, musCol = null, segSites = null, segMus = null, sitesW = null;
@@ -506,6 +524,7 @@ function loop() {
     if (video.currentTime > dur + 0.05 && !video.paused) video.currentTime = 0;  // the simulation may end a frame early
   }
   if (viewMode === "orbit") controls.update();
+  sky.position.copy(camera.position);
   renderer.render(scene, camera);
 }
 

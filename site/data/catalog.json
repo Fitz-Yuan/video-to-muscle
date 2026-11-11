@@ -47,6 +47,22 @@
    "video": "data/video/walk_reach.mp4",
    "poster": "data/video/walk_reach.jpg",
    "bytes": 2075360
+  },
+  {
+   "id": "knee_lift",
+   "title": "Walk and knee lift",
+   "group": "task",
+   "seconds": 11.0,
+   "video_s": 11.07,
+   "fell_s": null,
+   "source": "our lab",
+   "source_url": "",
+   "width": 480,
+   "height": 854,
+   "file": "data/clips/knee_lift.elvw",
+   "video": "data/video/knee_lift.mp4",
+   "poster": "data/video/knee_lift.jpg",
+   "bytes": 1792584
   }
  ]
 }
