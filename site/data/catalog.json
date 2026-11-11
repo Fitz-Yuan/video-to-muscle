@@ -63,6 +63,22 @@
    "video": "data/video/knee_lift.mp4",
    "poster": "data/video/knee_lift.jpg",
    "bytes": 1792584
+  },
+  {
+   "id": "walk_around",
+   "title": "Walk around",
+   "group": "walk",
+   "seconds": 9.3,
+   "video_s": 9.37,
+   "fell_s": null,
+   "source": "our lab",
+   "source_url": "",
+   "width": 480,
+   "height": 854,
+   "file": "data/clips/walk_around.elvw",
+   "video": "data/video/walk_around.mp4",
+   "poster": "data/video/walk_around.jpg",
+   "bytes": 1516352
   }
  ]
 }
