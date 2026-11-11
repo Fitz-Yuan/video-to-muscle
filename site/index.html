@@ -458,7 +458,6 @@ async function openClip(e) {
   $("loading").classList.remove("on");
   video.play().then(() => setPlaying(true), () => setPlaying(false));
   if (viewMode === "orbit") frameOrbit();
-  try { history.replaceState(null, "", `#${e.id}`); } catch {}
 }
 
 /* ---------- layout: the video keeps its own aspect; the simulation pane takes the rest of the row
