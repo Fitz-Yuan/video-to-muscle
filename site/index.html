@@ -47,8 +47,9 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .mark i { width: 7px; height: 7px; border-radius: 50%; background: var(--hot); }
 
 .hero { text-align: center; padding: clamp(4px, 1.5vh, 24px) 16px clamp(16px, 3vh, 32px); }
-.hero h1 { margin: 0; font-weight: 300; font-size: clamp(28px, 4.4vw, 56px); letter-spacing: -0.03em; line-height: 1.05; }
-.hero h1 b { font-weight: 500; background: linear-gradient(90deg, var(--hot), var(--hot-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero h1 { margin: 0; font-weight: 400; font-size: clamp(28px, 3.5vw, 64px); letter-spacing: -0.035em; line-height: 1.08; white-space: nowrap; }
+@media (max-width: 900px) { .hero h1 { white-space: normal; text-wrap: balance; font-size: clamp(28px, 6.5vw, 44px); } }
+.hero h1 b { font-weight: 600; background: linear-gradient(90deg, var(--hot), var(--hot-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hero p { margin: 14px auto 0; max-width: 560px; color: var(--muted); font-size: clamp(14px, 1.3vw, 16px); line-height: 1.55; font-weight: 400; }
 
 /* ---- stage: input video | simulation ---- */
@@ -140,7 +141,7 @@ footer { max-width: 1180px; margin: clamp(56px, 10vh, 110px) auto 0; padding: 22
 
 <main>
   <section class="hero">
-    <h1>Single-camera video to a<br><b>muscle-driven generalist.</b></h1>
+    <h1>Single-Camera Video to a <b>Muscle-Driven Generalist</b></h1>
     <p>One generalist policy reads a single phone video and drives 354 muscles to perform the whole-body motion in full physics. No motion capture, no per-clip tuning.</p>
   </section>
 
