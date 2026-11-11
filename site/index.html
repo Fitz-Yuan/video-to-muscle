@@ -56,7 +56,7 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .stage { position: relative; display: flex; justify-content: center; gap: clamp(8px, 1.2vw, 16px); }
 .pane { position: relative; border-radius: 14px; overflow: hidden; background: #000; border: 1px solid var(--line);
   box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.9); }
-.pane.sim { background: radial-gradient(120% 90% at 50% 0%, #121a23 0%, #070a0e 70%); }
+.pane.sim { background: #f5f5f2; border-color: rgba(255, 255, 255, 0.14); }
 .pane video, .pane canvas { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pane canvas { touch-action: none; cursor: grab; }
 .tag { position: absolute; top: 12px; left: 12px; z-index: 2; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em;
@@ -64,10 +64,10 @@ header { display: flex; align-items: center; justify-content: space-between; pad
   background: rgba(6, 8, 11, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.08); }
 .tag em { font-style: normal; color: var(--hot); }
 .legend { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
-.legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #f4f4f2, #eb0a0a); }
-.effort { position: absolute; left: 12px; bottom: 12px; top: auto; z-index: 2; width: 3px; height: 64px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
-.effort i { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(0deg, var(--hot), var(--hot-2)); box-shadow: 0 0 10px var(--hot); transition: height 0.08s linear; }
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #6b6b70; }
+.legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #d1c9c7, #b8080d); }
+.effort { position: absolute; left: 12px; bottom: 12px; top: auto; z-index: 2; width: 3px; height: 64px; border-radius: 2px; background: rgba(0, 0, 0, 0.08); overflow: hidden; }
+.effort i { position: absolute; left: 0; right: 0; bottom: 0; background: #b8080d; transition: height 0.08s linear; }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
 .loading.on { opacity: 1; }
 .loading i { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.12); border-top-color: var(--hot); animation: spin 0.8s linear infinite; }
@@ -140,8 +140,8 @@ footer { max-width: 1180px; margin: clamp(56px, 10vh, 110px) auto 0; padding: 22
 
 <main>
   <section class="hero">
-    <h1>Everyday video,<br><b>reproduced by muscles.</b></h1>
-    <p>One muscle-driven policy watches an ordinary video and performs the same motion in physics, with every muscle doing the work.</p>
+    <h1>Single-camera video to a<br><b>muscle-driven generalist.</b></h1>
+    <p>One generalist policy reads a single phone video and drives 354 muscles to perform the whole-body motion in full physics. No motion capture, no per-clip tuning.</p>
   </section>
 
   <section class="stage-wrap">
@@ -228,10 +228,11 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.toneMappingExposure = 1.05;
 paneSim.prepend(renderer.domElement);
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x070a0e, 7, 26);
+scene.background = new THREE.Color(0xf5f5f2);
+scene.fog = new THREE.Fog(0xf5f5f2, 8, 30);
 const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 200);
 camera.up.set(0, 0, 1);
 camera.position.set(3, -3.5, 1.6);
@@ -240,25 +241,25 @@ controls.target.set(0, 0, 0.95);
 controls.enableDamping = true;
 controls.enabled = false;
 
-scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a1210, 0.9));
-const key = new THREE.DirectionalLight(0xffffff, 2.2);
+const hemi = new THREE.HemisphereLight(0xffffff, 0xcfc9bf, 1.25); hemi.up = new THREE.Vector3(0, 0, 1); hemi.position.set(0, 0, 1); scene.add(hemi);
+const key = new THREE.DirectionalLight(0xffffff, 1.6);
 key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
 Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 0.5, far: 20 });
 key.shadow.bias = -0.0004;
 scene.add(key, key.target);
-const rim = new THREE.DirectionalLight(0xff6a45, 1.1); scene.add(rim);
-const rimB = new THREE.DirectionalLight(0x5cc8ff, 0.6); scene.add(rimB);
+const rim = new THREE.DirectionalLight(0x9fc4ff, 0.35); scene.add(rim);  // cool fill, as the results viewer
+const rimB = new THREE.DirectionalLight(0xffffff, 0.0); scene.add(rimB);
 
 // floor: a soft shadow catcher and a fine grid that fades into the fog
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.45 }));
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.13 }));
 floor.receiveShadow = true; scene.add(floor);
-const grid = new THREE.GridHelper(200, 400, 0x2a3440, 0x161d25);
+const grid = new THREE.GridHelper(200, 400, 0xe6e6e1, 0xe6e6e1);
 grid.rotation.x = Math.PI / 2; grid.position.z = 0.001;
-grid.material.transparent = true; grid.material.opacity = 0.75; scene.add(grid);
+grid.material.transparent = true; grid.material.opacity = 0.6; scene.add(grid);
 
-const boneMat = new THREE.MeshStandardMaterial({ color: 0x6b7178, roughness: 0.6, metalness: 0.1 });
-const ghostMat = new THREE.MeshStandardMaterial({ color: 0x5cc8ff, roughness: 0.6, transparent: true, opacity: 0.18, depthWrite: false });
-const musMat = new LineMaterial({ linewidth: 2.0, vertexColors: true, transparent: true, opacity: 0.95 });
+const boneMat = new THREE.MeshStandardMaterial({ color: 0xe6dfd0, roughness: 0.55, metalness: 0.0 });
+const ghostMat = new THREE.MeshStandardMaterial({ color: 0x6f97c4, roughness: 0.6, transparent: true, opacity: 0.32, depthWrite: false });
+const musMat = new LineMaterial({ linewidth: 1.8, vertexColors: true, transparent: true, opacity: 0.92 });
 
 /* ---------- body model ---------- */
 let model = null, bodyGroups = [], musBuf = null, musCol = null, segSites = null, segMus = null, sitesW = null;
@@ -330,15 +331,15 @@ function setMuscles(P, Q, f, ps) {
   for (let i = 0; i < segSites.length; i++) { const s = 3 * segSites[i]; A[3 * i] = W[s]; A[3 * i + 1] = W[s + 1]; A[3 * i + 2] = W[s + 2]; }
   musBuf.needsUpdate = true;
 }
-// activation colour: white at rest -> red when fully active
-const REST = [0.96, 0.96, 0.95], HOT = [0.92, 0.04, 0.04];
+// activation colour: grey at rest -> red when fully active (as the results viewer and the MuJoCo renderer)
+const REST = [0.82, 0.79, 0.78], HOT = [0.72, 0.03, 0.05];
 function colourMuscles(f) {
   const mu = clip.meta.muscle_act, A = clip.a[mu.array].data, n = mu.muscles.length;
   const map = clip.musMap ??= (() => { const ix = new Map(mu.muscles.map((nm, i) => [nm, i])); return Int32Array.from(model.meta.muscles, m => ix.get(m.name) ?? -1); })();
   const C = musCol.array;
   for (let i = 0; i < segMus.length; i++) {
     const k = map[segMus[i]];
-    const v = k < 0 ? 0 : Math.min(1, Math.pow(A[f * n + k] / 254, 0.6) * 1.3);
+    const v = k < 0 ? 0 : Math.min(1, A[f * n + k] / 254);
     const r = REST[0] + (HOT[0] - REST[0]) * v, g = REST[1] + (HOT[1] - REST[1]) * v, b = REST[2] + (HOT[2] - REST[2]) * v;
     C[6 * i] = C[6 * i + 3] = r; C[6 * i + 1] = C[6 * i + 4] = g; C[6 * i + 2] = C[6 * i + 5] = b;
   }
@@ -359,8 +360,8 @@ async function openClip(e) {
   const c = await fetchClip(e);
   if (current !== e) return;
   clip = c; frame = -1;
-  if (ghostGroups) ghostGroups.root.visible = !!clip.a.ghost_pos;
-  if (clip.a.ghost_pos) { ensureGhost(); ghostGroups.root.visible = true; }
+  if (ghostGroups) ghostGroups.root.visible = false;
+  // the video estimate (ghost) stays hidden: the page shows the simulation alone
   video.src = e.video; video.poster = e.poster;
   video.playbackRate = speed;
   layout();
@@ -429,10 +430,12 @@ function show(f) {
   colourMuscles(f);
   $("effort").style.height = `${Math.min(100, 220 * a.effort.data[f])}%`;
   const p = pelvisAt(f);
-  key.position.set(p.x + 2.5, p.y - 2.0, 5.5); key.target.position.copy(p);
-  rim.position.set(p.x - 3, p.y + 2.5, 2.2); rimB.position.set(p.x + 3, p.y + 3, 1.2);
   if (viewMode === "video") videoCamera(f);
   else { const d = p.clone().sub(lastPel); d.z = 0; controls.target.add(d); camera.position.add(d); lastPel.copy(p); }
+  // light from above the viewer's side (a little to the right), so the side facing the camera is lit
+  const v = tmp.set(camera.position.x - p.x, camera.position.y - p.y, 0).normalize();
+  key.position.set(p.x + 3 * v.x + 1.5 * v.y, p.y + 3 * v.y - 1.5 * v.x, 5.5); key.target.position.copy(p);
+  rim.position.set(p.x - 3 * v.x, p.y - 3 * v.y, 2.2);
 }
 
 /* ---------- transport ---------- */
