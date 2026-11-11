@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video to Muscle</title>
+<meta name="description" content="Everyday video reproduced in physics by a muscle-driven full-body policy.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307090c'/%3E%3Cpath d='M9 22c3-9 11-9 14 0' stroke='%23ff4d2e' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #06080b;
+  --bg-2: #0b0f14;
+  --panel: #0d1218;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-2: rgba(255, 255, 255, 0.16);
+  --fg: #eef1f4;
+  --muted: #7d8794;
+  --dim: #4a535e;
+  --hot: #ff4d2e;
+  --hot-2: #ffb36b;
+  --cool: #5cc8ff;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+body { min-height: 100vh; overflow-x: hidden; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+
+/* faint backdrop: a radial glow and a fine grid behind the stage */
+.backdrop { position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(60% 50% at 70% 20%, rgba(255, 77, 46, 0.07), transparent 70%),
+    radial-gradient(50% 40% at 20% 10%, rgba(92, 200, 255, 0.05), transparent 70%); }
+.backdrop::after { content: ""; position: absolute; inset: 0;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 64px 64px; opacity: 0.35;
+  mask-image: radial-gradient(70% 60% at 50% 30%, #000 30%, transparent 80%); -webkit-mask-image: radial-gradient(70% 60% at 50% 30%, #000 30%, transparent 80%); }
+
+header, main, footer { position: relative; z-index: 1; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 18px clamp(16px, 4vw, 48px); }
+.mark { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+.mark i { width: 7px; height: 7px; border-radius: 50%; background: var(--hot); box-shadow: 0 0 12px var(--hot); }
+
+.hero { text-align: center; padding: clamp(4px, 1.5vh, 24px) 16px clamp(16px, 3vh, 32px); }
+.hero h1 { margin: 0; font-weight: 300; font-size: clamp(28px, 4.4vw, 56px); letter-spacing: -0.03em; line-height: 1.05; }
+.hero h1 b { font-weight: 500; background: linear-gradient(90deg, var(--hot), var(--hot-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero p { margin: 14px auto 0; max-width: 560px; color: var(--muted); font-size: clamp(14px, 1.3vw, 16px); line-height: 1.55; font-weight: 400; }
+
+/* ---- stage: input video | simulation ---- */
+.stage-wrap { padding: 0 clamp(16px, 4vw, 48px); }
+.stage { position: relative; display: flex; justify-content: center; gap: clamp(8px, 1.2vw, 16px); }
+.pane { position: relative; border-radius: 14px; overflow: hidden; background: #000; border: 1px solid var(--line);
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.9); }
+.pane.sim { background: radial-gradient(120% 90% at 50% 0%, #121a23 0%, #070a0e 70%); }
+.pane video, .pane canvas { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pane canvas { touch-action: none; cursor: grab; }
+.tag { position: absolute; top: 12px; left: 12px; z-index: 2; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: rgba(255, 255, 255, 0.78); padding: 6px 9px; border-radius: 6px;
+  background: rgba(6, 8, 11, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.08); }
+.tag em { font-style: normal; color: var(--hot); }
+.legend { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 255, 255, 0.55); }
+.legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #4b3236, var(--hot) 70%, var(--hot-2)); }
+.effort { position: absolute; left: 12px; bottom: 12px; top: auto; z-index: 2; width: 3px; height: 64px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.effort i { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(0deg, var(--hot), var(--hot-2)); box-shadow: 0 0 10px var(--hot); transition: height 0.08s linear; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
+.loading.on { opacity: 1; }
+.loading i { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.12); border-top-color: var(--hot); animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- transport ---- */
+.transport { display: flex; align-items: center; gap: 14px; max-width: 1180px; margin: 16px auto 0; padding: 0 2px; }
+.play { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line-2); background: rgba(255, 255, 255, 0.03);
+  display: grid; place-items: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.play:hover { border-color: var(--hot); background: rgba(255, 77, 46, 0.08); }
+.play svg { width: 14px; height: 14px; fill: var(--fg); }
+.scrub { position: relative; flex: 1; height: 28px; cursor: pointer; touch-action: none; }
+.scrub .rail { position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line-2); border-radius: 1px; }
+.scrub .fill { position: absolute; left: 0; top: 13px; height: 2px; background: linear-gradient(90deg, var(--hot), var(--hot-2)); border-radius: 1px; width: 0; }
+.scrub .knob { position: absolute; top: 8px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255, 77, 46, 0.25); left: 0; }
+.seg { display: flex; border: 1px solid var(--line-2); border-radius: 999px; padding: 3px; gap: 2px; flex: none; }
+.seg button { border: 0; background: none; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; color: var(--muted); letter-spacing: 0.02em; }
+.seg button.on { background: rgba(255, 255, 255, 0.09); color: var(--fg); }
+.seg button:hover:not(.on) { color: var(--fg); }
+
+/* ---- clip strip ---- */
+.clips { max-width: 1180px; margin: clamp(28px, 5vh, 56px) auto 0; padding: 0 clamp(16px, 4vw, 48px); box-sizing: content-box; }
+.clips-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.clips-head h2 { margin: 0; font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+.strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; }
+.card { position: relative; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); cursor: pointer;
+  padding: 0; text-align: left; transition: border-color 0.2s, transform 0.2s; }
+.card:hover { border-color: var(--line-2); transform: translateY(-2px); }
+.card.on { border-color: rgba(255, 77, 46, 0.7); box-shadow: 0 0 0 1px rgba(255, 77, 46, 0.35), 0 10px 30px -12px rgba(255, 77, 46, 0.45); }
+.card img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; filter: saturate(0.85) brightness(0.88); transition: filter 0.2s; }
+.card:hover img, .card.on img { filter: none; }
+.card span { display: block; padding: 10px 12px 11px; font-size: 13px; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- how it works ---- */
+.how { max-width: 1180px; margin: clamp(56px, 10vh, 110px) auto 0; padding: 0 clamp(16px, 4vw, 48px); box-sizing: content-box; }
+.how h2 { margin: 0 0 26px; font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); text-align: center; }
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
+.steps::before { content: ""; position: absolute; left: 12.5%; right: 12.5%; top: 27px; height: 1px; background: linear-gradient(90deg, var(--line-2), rgba(255, 77, 46, 0.6)); }
+.step { text-align: center; padding: 0 10px; position: relative; }
+.step .ic { width: 54px; height: 54px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: var(--bg); border: 1px solid var(--line-2); position: relative; }
+.step:last-child .ic { border-color: rgba(255, 77, 46, 0.7); box-shadow: 0 0 24px -4px rgba(255, 77, 46, 0.5); }
+.step svg { width: 22px; height: 22px; stroke: var(--fg); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.step h3 { margin: 0; font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
+.step p { margin: 6px auto 0; max-width: 210px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+footer { max-width: 1180px; margin: clamp(56px, 10vh, 110px) auto 0; padding: 22px clamp(16px, 4vw, 48px) 36px; box-sizing: content-box;
+  border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; font-size: 12px; color: var(--dim); }
+
+@media (max-width: 760px) {
+  .stage { flex-direction: column; align-items: center; }
+  .transport { flex-wrap: wrap; }
+  .scrub { order: 3; flex-basis: 100%; }
+  .steps { grid-template-columns: 1fr 1fr; row-gap: 30px; }
+  .steps::before { display: none; }
+  .strip { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div class="backdrop"></div>
+<header>
+  <div class="mark"><i></i>Video&nbsp;→&nbsp;Muscle</div>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Everyday video,<br><b>reproduced by muscles.</b></h1>
+    <p>One muscle-driven policy watches an ordinary video and performs the same motion in physics, with every muscle doing the work.</p>
+  </section>
+
+  <section class="stage-wrap">
+    <div class="stage" id="stage">
+      <div class="pane" id="paneVideo">
+        <div class="tag">Video</div>
+        <video id="video" muted playsinline preload="auto" crossorigin="anonymous"></video>
+      </div>
+      <div class="pane sim" id="paneSim">
+        <div class="tag">Simulation · <em>354 muscles</em></div>
+        <div class="effort" title="Overall muscle activation"><i id="effort"></i></div>
+        <div class="legend"><span>rest</span><span class="bar"></span><span>active</span></div>
+        <div class="loading" id="loading"><i></i></div>
+      </div>
+    </div>
+    <div class="transport">
+      <button class="play" id="play" aria-label="Pause"><svg viewBox="0 0 14 14" id="playIcon"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg></button>
+      <div class="scrub" id="scrub"><div class="rail"></div><div class="fill" id="fill"></div><div class="knob" id="knob"></div></div>
+      <div class="seg" id="viewSeg" role="group" aria-label="Camera">
+        <button data-v="video" class="on">Video view</button><button data-v="orbit">Free view</button>
+      </div>
+      <div class="seg" id="speedSeg" role="group" aria-label="Speed">
+        <button data-s="1" class="on">1×</button><button data-s="0.5">½×</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="clips">
+    <div class="clips-head">
+      <h2>Clips</h2>
+      <div class="seg" id="filterSeg" role="group" aria-label="Filter">
+        <button data-g="all" class="on">All</button><button data-g="task">Tasks</button><button data-g="walk">Walking</button><button data-g="jog">Running</button>
+      </div>
+    </div>
+    <div class="strip" id="strip"></div>
+  </section>
+
+  <section class="how">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg></div>
+        <h3>Video</h3><p>Any single-camera clip of a person.</p></div>
+      <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M12 9l-4 3M12 9l4 3M12 14l-3 6M12 14l3 6"/></svg></div>
+        <h3>3D motion</h3><p>The body's motion is estimated in 3D.</p></div>
+      <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><path d="M8 3c-2 4-2 7 0 9s2 6 0 9M16 3c2 4 2 7 0 9s-2 6 0 9M8 7.5h8M8 16.5h8"/></svg></div>
+        <h3>Musculoskeletal body</h3><p>Mapped onto a full-body skeleton driven by muscles.</p></div>
+      <div class="step"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 12h3l3-7 4 14 3-7h5"/></svg></div>
+        <h3>Muscle policy</h3><p>One trained controller activates the muscles to perform it in physics.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>Videos: <span id="credits">Mixkit and Pexels</span>, free licenses.</span>
+  <span>Results only. Model weights are not released.</span>
+</footer>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { LineSegments2 } from "three/addons/lines/LineSegments2.js";
+import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js";
+import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+
+const $ = id => document.getElementById(id);
+
+/* ---------- ELVW container: magic, version, header length, JSON {meta, arrays}, raw arrays ---------- */
+function parseELVW(buf) {
+  const dv = new DataView(buf);
+  if (String.fromCharCode(...new Uint8Array(buf, 0, 4)) !== "ELVW") throw new Error("not an .elvw file");
+  const hl = dv.getUint32(8, true);
+  const head = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 12, hl)));
+  const base = 12 + hl, T = { i2: Int16Array, u2: Uint16Array, f4: Float32Array, u1: Uint8Array, i1: Int8Array, i4: Int32Array, u4: Uint32Array };
+  const a = {};
+  for (const [name, [dt, shape, off]] of Object.entries(head.arrays))
+    a[name] = { data: new T[dt](buf, base + off, shape.reduce((x, y) => x * y, 1)), shape };
+  return { meta: head.meta, a };
+}
+
+/* ---------- scene ---------- */
+const paneSim = $("paneSim"), paneVideo = $("paneVideo"), video = $("video");
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+paneSim.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x070a0e, 7, 26);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 200);
+camera.up.set(0, 0, 1);
+camera.position.set(3, -3.5, 1.6);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0, 0.95);
+controls.enableDamping = true;
+controls.enabled = false;
+
+scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a1210, 0.9));
+const key = new THREE.DirectionalLight(0xffffff, 2.2);
+key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 0.5, far: 20 });
+key.shadow.bias = -0.0004;
+scene.add(key, key.target);
+const rim = new THREE.DirectionalLight(0xff6a45, 1.1); scene.add(rim);
+const rimB = new THREE.DirectionalLight(0x5cc8ff, 0.6); scene.add(rimB);
+
+// floor: a soft shadow catcher and a fine grid that fades into the fog
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.45 }));
+floor.receiveShadow = true; scene.add(floor);
+const grid = new THREE.GridHelper(200, 400, 0x2a3440, 0x161d25);
+grid.rotation.x = Math.PI / 2; grid.position.z = 0.001;
+grid.material.transparent = true; grid.material.opacity = 0.75; scene.add(grid);
+
+const boneMat = new THREE.MeshStandardMaterial({ color: 0xd9d2c6, roughness: 0.55, metalness: 0.05 });
+const ghostMat = new THREE.MeshStandardMaterial({ color: 0x5cc8ff, roughness: 0.6, transparent: true, opacity: 0.18, depthWrite: false });
+const musMat = new LineMaterial({ linewidth: 2.0, vertexColors: true, transparent: true, opacity: 0.95 });
+
+/* ---------- body model ---------- */
+let model = null, bodyGroups = [], musBuf = null, musCol = null, segSites = null, segMus = null, sitesW = null;
+const human = new THREE.Group(); scene.add(human);
+const q4 = q => new THREE.Quaternion(q[1], q[2], q[3], q[0]);
+async function loadModel() {
+  const m = parseELVW(await (await fetch("models/mm106_model.elvw")).arrayBuffer());
+  model = m;
+  const V = m.a.verts.data, Fc = m.a.faces.data;
+  bodyGroups = m.meta.bodies.map(() => { const g = new THREE.Group(); human.add(g); return g; });
+  for (const me of m.meta.meshes) {
+    const pos = new Float32Array(me.nv * 3);
+    for (let i = 0; i < me.nv; i++) for (let k = 0; k < 3; k++) pos[3 * i + k] = (V[3 * (me.vofs + i) + k] + 32767) * me.scale[k] + me.lo[k];
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    g.setIndex(new THREE.BufferAttribute(Fc.slice(3 * me.fofs, 3 * (me.fofs + me.nf)), 1));
+    g.computeVertexNormals();
+    const mesh = new THREE.Mesh(g, boneMat);
+    mesh.position.set(...me.pos); mesh.quaternion.copy(q4(me.quat));
+    mesh.castShadow = true;
+    bodyGroups[me.body].add(mesh);
+  }
+  m.pelvis = Math.max(0, m.meta.bodies.indexOf("pelvis"));
+  const segs = [], sm = [];
+  m.meta.muscles.forEach((mu, k) => { for (let i = 0; i + 1 < mu.sites.length; i++) { segs.push(mu.sites[i], mu.sites[i + 1]); sm.push(k); } });
+  segSites = new Uint16Array(segs); segMus = new Uint16Array(sm);
+  const lg = new LineSegmentsGeometry();
+  lg.setPositions(new Float32Array(segSites.length * 3));
+  lg.setColors(new Float32Array(segSites.length * 3).fill(0.3));
+  musCol = lg.attributes.instanceColorStart.data;
+  musBuf = lg.attributes.instanceStart.data;
+  const lines = new LineSegments2(lg, musMat); lines.frustumCulled = false; human.add(lines);
+  sitesW = new Float32Array(m.a.site_body.data.length * 3);
+}
+
+// ghost (the video estimate), only when a clip carries it
+let ghostGroups = null;
+function ensureGhost() {
+  if (ghostGroups) return;
+  const ghost = new THREE.Group(); scene.add(ghost);
+  ghostGroups = model.meta.bodies.map(() => { const g = new THREE.Group(); ghost.add(g); return g; });
+  for (const grp of bodyGroups.keys()) for (const c of bodyGroups[grp].children) {
+    const m = new THREE.Mesh(c.geometry, ghostMat); m.position.copy(c.position); m.quaternion.copy(c.quaternion); ghostGroups[grp].add(m);
+  }
+  ghostGroups.root = ghost;
+}
+
+function setBodies(groups, P, Q, f, ps) {
+  const nb = model.meta.bodies.length;
+  for (let b = 0; b < nb; b++) {
+    const o = f * nb + b, g = groups[b];
+    g.position.set(P[3 * o] * ps, P[3 * o + 1] * ps, P[3 * o + 2] * ps);
+    g.quaternion.set(Q[4 * o + 1] / 32767, Q[4 * o + 2] / 32767, Q[4 * o + 3] / 32767, Q[4 * o] / 32767);
+  }
+}
+function setMuscles(P, Q, f, ps) {
+  const sb = model.a.site_body.data, sp = model.a.site_pos.data, nb = model.meta.bodies.length, W = sitesW;
+  for (let s = 0; s < sb.length; s++) {
+    const o = f * nb + sb[s];
+    const px = P[3 * o] * ps, py = P[3 * o + 1] * ps, pz = P[3 * o + 2] * ps;
+    const w = Q[4 * o] / 32767, x = Q[4 * o + 1] / 32767, y = Q[4 * o + 2] / 32767, z = Q[4 * o + 3] / 32767;
+    const vx = sp[3 * s], vy = sp[3 * s + 1], vz = sp[3 * s + 2];
+    const tx = 2 * (y * vz - z * vy), ty = 2 * (z * vx - x * vz), tz = 2 * (x * vy - y * vx);
+    W[3 * s] = px + vx + w * tx + (y * tz - z * ty);
+    W[3 * s + 1] = py + vy + w * ty + (z * tx - x * tz);
+    W[3 * s + 2] = pz + vz + w * tz + (x * ty - y * tx);
+  }
+  const A = musBuf.array;
+  for (let i = 0; i < segSites.length; i++) { const s = 3 * segSites[i]; A[3 * i] = W[s]; A[3 * i + 1] = W[s + 1]; A[3 * i + 2] = W[s + 2]; }
+  musBuf.needsUpdate = true;
+}
+// activation colour: dim at rest -> hot red -> amber when fully active
+const REST = [0.24, 0.15, 0.17], HOT = [1.0, 0.24, 0.12], MAX = [1.0, 0.68, 0.36];
+function colourMuscles(f) {
+  const mu = clip.meta.muscle_act, A = clip.a[mu.array].data, n = mu.muscles.length;
+  const map = clip.musMap ??= (() => { const ix = new Map(mu.muscles.map((nm, i) => [nm, i])); return Int32Array.from(model.meta.muscles, m => ix.get(m.name) ?? -1); })();
+  const C = musCol.array;
+  for (let i = 0; i < segMus.length; i++) {
+    const k = map[segMus[i]];
+    const v = k < 0 ? 0 : Math.min(1, Math.pow(A[f * n + k] / 254, 0.7) * 1.25);
+    let r, g, b;
+    if (v < 0.75) { const u = v / 0.75; r = REST[0] + (HOT[0] - REST[0]) * u; g = REST[1] + (HOT[1] - REST[1]) * u; b = REST[2] + (HOT[2] - REST[2]) * u; }
+    else { const u = (v - 0.75) / 0.25; r = HOT[0] + (MAX[0] - HOT[0]) * u; g = HOT[1] + (MAX[1] - HOT[1]) * u; b = HOT[2] + (MAX[2] - HOT[2]) * u; }
+    C[6 * i] = C[6 * i + 3] = r; C[6 * i + 1] = C[6 * i + 4] = g; C[6 * i + 2] = C[6 * i + 5] = b;
+  }
+  musCol.needsUpdate = true;
+}
+
+/* ---------- clips ---------- */
+let catalog = [], clip = null, current = null, frame = -1, viewMode = "video", playing = true, speed = 1;
+const cache = new Map();
+async function fetchClip(e) {
+  if (!cache.has(e.id)) cache.set(e.id, fetch(e.file, { cache: "no-store" }).then(r => r.arrayBuffer()).then(parseELVW));
+  return cache.get(e.id);
+}
+async function openClip(e) {
+  current = e;
+  for (const c of document.querySelectorAll(".card")) c.classList.toggle("on", c.dataset.id === e.id);
+  $("loading").classList.add("on");
+  const c = await fetchClip(e);
+  if (current !== e) return;
+  clip = c; frame = -1;
+  if (ghostGroups) ghostGroups.root.visible = !!clip.a.ghost_pos;
+  if (clip.a.ghost_pos) { ensureGhost(); ghostGroups.root.visible = true; }
+  video.src = e.video; video.poster = e.poster;
+  video.playbackRate = speed;
+  layout();
+  $("loading").classList.remove("on");
+  video.play().then(() => setPlaying(true), () => setPlaying(false));
+  if (viewMode === "orbit") frameOrbit();
+  try { history.replaceState(null, "", `#${e.id}`); } catch {}
+}
+
+/* ---------- layout: both panes take the video's aspect, side by side (stacked on phones) ---------- */
+function layout() {
+  const aspect = clip ? clip.meta.aspect : 16 / 9;
+  const st = $("stage"), W = st.clientWidth, narrow = innerWidth <= 760, gap = narrow ? 8 : Math.min(16, 0.012 * innerWidth);
+  // fit the stage and the transport row in the window below the stage's top (at least 360 px)
+  const top = st.getBoundingClientRect().top + scrollY;
+  const maxH = narrow ? 0.62 * innerHeight : Math.max(360, Math.min(innerHeight - top - 84, 680));
+  let w = narrow ? W : (W - gap) / 2, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  for (const p of [paneVideo, paneSim]) { p.style.width = `${w}px`; p.style.height = `${h}px`; }
+  renderer.setSize(w, h, false);
+  renderer.domElement.style.width = `${w}px`; renderer.domElement.style.height = `${h}px`;
+  musMat.resolution.set(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener("resize", layout);
+
+/* ---------- camera ---------- */
+const tmp = new THREE.Vector3(), lastPel = new THREE.Vector3();
+function videoCamera(f) {
+  const P = clip.a.cam_pos.data, Fw = clip.a.cam_fwd.data, U = clip.a.cam_up.data, o = 3 * f;
+  camera.position.set(P[o], P[o + 1], P[o + 2]);
+  camera.up.set(U[o], U[o + 1], U[o + 2]);
+  camera.lookAt(tmp.set(P[o] + Fw[o], P[o + 1] + Fw[o + 1], P[o + 2] + Fw[o + 2]));
+  if (Math.abs(camera.fov - clip.meta.fov_deg) > 1e-3) { camera.fov = clip.meta.fov_deg; camera.updateProjectionMatrix(); }
+}
+function pelvisAt(f) {
+  const nb = model.meta.bodies.length, P = clip.a.body_pos.data, ps = clip.meta.pos_scale, o = 3 * (f * nb + model.pelvis);
+  return new THREE.Vector3(P[o] * ps, P[o + 1] * ps, P[o + 2] * ps);
+}
+function frameOrbit() {
+  const p = pelvisAt(Math.max(0, frame));
+  camera.up.set(0, 0, 1); camera.fov = 36; camera.updateProjectionMatrix();
+  controls.target.set(p.x, p.y, 0.9);
+  camera.position.set(p.x + 3.2, p.y - 3.4, 1.7);
+  lastPel.copy(p);
+}
+function setView(v) {
+  viewMode = v; controls.enabled = v === "orbit";
+  for (const b of $("viewSeg").children) b.classList.toggle("on", b.dataset.v === v);
+  renderer.domElement.style.cursor = v === "orbit" ? "grab" : "default";
+  if (v === "orbit" && clip) frameOrbit();
+}
+$("viewSeg").onclick = e => { const v = e.target.dataset?.v; if (v) setView(v); };
+renderer.domElement.addEventListener("pointerdown", () => { if (viewMode === "video" && clip) setView("orbit"); });
+
+/* ---------- frame ---------- */
+function show(f) {
+  if (!clip || !model) return;
+  f = Math.max(0, Math.min(clip.meta.frames - 1, f));
+  if (f === frame) return;
+  frame = f;
+  const a = clip.a, ps = clip.meta.pos_scale;
+  setBodies(bodyGroups, a.body_pos.data, a.body_quat.data, f, ps);
+  setMuscles(a.body_pos.data, a.body_quat.data, f, ps);
+  if (a.ghost_pos && ghostGroups) setBodies(ghostGroups, a.ghost_pos.data, a.ghost_quat.data, f, ps);
+  colourMuscles(f);
+  $("effort").style.height = `${Math.min(100, 220 * a.effort.data[f])}%`;
+  const p = pelvisAt(f);
+  key.position.set(p.x + 2.5, p.y - 2.0, 5.5); key.target.position.copy(p);
+  rim.position.set(p.x - 3, p.y + 2.5, 2.2); rimB.position.set(p.x + 3, p.y + 3, 1.2);
+  if (viewMode === "video") videoCamera(f);
+  else { const d = p.clone().sub(lastPel); d.z = 0; controls.target.add(d); camera.position.add(d); lastPel.copy(p); }
+}
+
+/* ---------- transport ---------- */
+const PLAY = '<path d="M3 1.5v11l9.5-5.5z"/>', PAUSE = '<rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/>';
+function setPlaying(p) { playing = p; $("playIcon").innerHTML = p ? PAUSE : PLAY; $("play").setAttribute("aria-label", p ? "Pause" : "Play"); }
+$("play").onclick = () => { if (video.paused) { video.play(); setPlaying(true); } else { video.pause(); setPlaying(false); } };
+$("speedSeg").onclick = e => {
+  const s = +e.target.dataset?.s; if (!s) return;
+  speed = s; video.playbackRate = s;
+  for (const b of $("speedSeg").children) b.classList.toggle("on", +b.dataset.s === s);
+};
+video.loop = true;
+const scrub = $("scrub");
+function seekFrom(ev) {
+  const r = scrub.getBoundingClientRect(), u = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width));
+  if (clip) video.currentTime = u * Math.min(video.duration || Infinity, (clip.meta.frames - 1) / clip.meta.fps);
+}
+scrub.addEventListener("pointerdown", ev => { scrub.setPointerCapture(ev.pointerId); seekFrom(ev); scrub.onpointermove = seekFrom; });
+scrub.addEventListener("pointerup", () => { scrub.onpointermove = null; });
+addEventListener("keydown", e => {
+  if (e.target.closest("input, textarea")) return;
+  if (e.code === "Space") { e.preventDefault(); $("play").click(); }
+  if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+    const i = visible().indexOf(current), v = visible();
+    if (i >= 0) openClip(v[(i + (e.key === "ArrowRight" ? 1 : -1) + v.length) % v.length]);
+  }
+});
+
+/* ---------- clip strip ---------- */
+let filter = "all";
+const visible = () => catalog.filter(c => filter === "all" || c.group === filter);
+function buildStrip() {
+  const s = $("strip"); s.innerHTML = "";
+  for (const e of visible()) {
+    const b = document.createElement("button");
+    b.className = "card"; b.dataset.id = e.id;
+    b.innerHTML = `<img loading="lazy" alt="" src="${e.poster}"><span></span>`;
+    b.querySelector("span").textContent = e.title;
+    b.onclick = () => { openClip(e); $("stage").scrollIntoView({ behavior: "smooth", block: "center" }); };
+    if (current?.id === e.id) b.classList.add("on");
+    s.append(b);
+  }
+}
+$("filterSeg").onclick = e => {
+  const g = e.target.dataset?.g; if (!g) return;
+  filter = g; for (const b of $("filterSeg").children) b.classList.toggle("on", b.dataset.g === g);
+  for (const b of $("filterSeg").children) b.hidden = b.dataset.g !== "all" && !catalog.some(c => c.group === b.dataset.g);
+  buildStrip();
+};
+
+/* ---------- loop: the video is the clock ---------- */
+function loop() {
+  requestAnimationFrame(loop);
+  if (clip && model) {
+    const dur = (clip.meta.frames - 1) / clip.meta.fps;
+    const t = Math.min(video.currentTime || 0, dur);
+    show(Math.round(t * clip.meta.fps));
+    const u = dur > 0 ? t / dur : 0;
+    $("fill").style.width = `${100 * u}%`; $("knob").style.left = `${100 * u}%`;
+    if (video.currentTime > dur + 0.05 && !video.paused) video.currentTime = 0;  // the simulation may end a frame early
+  }
+  if (viewMode === "orbit") controls.update();
+  renderer.render(scene, camera);
+}
+
+(async () => {
+  layout();
+  $("loading").classList.add("on");
+  const [_, cat] = await Promise.all([loadModel(), fetch("data/catalog.json", { cache: "no-store" }).then(r => r.json())]);
+  const order = { task: 0, walk: 1, jog: 2 };
+  catalog = cat.clips.filter(c => !c.hidden).sort((x, y) => (order[x.group] - order[y.group]) || (x.order ?? 0) - (y.order ?? 0));
+  for (const b of $("filterSeg").children) b.hidden = b.dataset.g !== "all" && !catalog.some(c => c.group === b.dataset.g);
+  const src = [...new Set(catalog.map(c => c.source))];
+  if (src.length) $("credits").textContent = src.join(" and ");
+  buildStrip();
+  loop();
+  const first = catalog.find(c => c.id === location.hash.slice(1)) ?? catalog[0];
+  if (first) await openClip(first); else $("loading").classList.remove("on");
+})();
+</script>
+</body>
+</html>
