@@ -66,7 +66,7 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .tag em { font-style: normal; color: #e07f90; }
 .legend { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: flex; align-items: center; gap: 8px;
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #c9c6c0; }
-.legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #e9e3e1, #b8080d); }
+.legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #e9e3e1, #80121a); }
 .effort { position: absolute; left: 12px; bottom: 12px; top: auto; z-index: 2; width: 3px; height: 64px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
 .effort i { position: absolute; left: 0; right: 0; bottom: 0; background: #a8324a; transition: height 0.08s linear; }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
@@ -359,17 +359,27 @@ function setMuscles(P, Q, f, ps) {
 }
 // muscle colour by activation, as the results viewer: grey at rest -> red when fully active. Blended in display (sRGB)
 // space and converted to the renderer's linear space, so mid activations read as red rather than washed-out pink.
-const ON = -1, LOW = [0.84, 0.81, 0.80], HOT = [0.74, 0.04, 0.07];
+const ON = -1, LOW = [0.84, 0.81, 0.80], HOT = [0.50, 0.07, 0.10];  // grey -> muted deep red
 const toLin = c => Math.pow(c, 2.2);
 function colourMuscles(f) {
-  const mu = clip.meta.muscle_act, A = clip.a[mu.array].data, n = mu.muscles.length;
+  const mu = clip.meta.muscle_act, n = mu.muscles.length;
+  // display only: activations averaged over 0.18 s (9 frames, centred), so frame-to-frame jitter does not flicker
+  const A = clip.actS ??= (() => {
+    const raw = clip.a[mu.array].data, F = raw.length / n, out = new Float32Array(raw.length), h = 4;
+    for (let k = 0; k < n; k++) for (let t = 0; t < F; t++) {
+      let sum = 0, c = 0;
+      for (let d = -h; d <= h; d++) { const u = t + d; if (u >= 0 && u < F) { sum += raw[u * n + k]; c++; } }
+      out[t * n + k] = sum / c / 254;
+    }
+    return out;
+  })();
   const map = clip.musMap ??= (() => { const ix = new Map(mu.muscles.map((nm, i) => [nm, i])); return Int32Array.from(model.meta.muscles, m => ix.get(m.name) ?? -1); })();
   const C = musCol.array, P = actBuf.array;
   for (let i = 0; i < segMus.length; i++) {
     const k = map[segMus[i]];
-    const v = k < 0 ? 0 : Math.min(1, A[f * n + k] / 254);
+    const v = k < 0 ? 0 : Math.min(1, A[f * n + k]);
     if (v < ON) { P[6 * i + 3] = P[6 * i]; P[6 * i + 4] = P[6 * i + 1]; P[6 * i + 5] = P[6 * i + 2]; continue; }  // hidden: zero length
-    const u = Math.min(1, 1.6 * Math.sqrt(v));  // square root: low but real activations still show colour
+    const u = Math.min(1, 1.25 * Math.pow(v, 0.7));  // mild boost: low but real activations still show some colour
     const r = toLin(LOW[0] + (HOT[0] - LOW[0]) * u), g = toLin(LOW[1] + (HOT[1] - LOW[1]) * u), b = toLin(LOW[2] + (HOT[2] - LOW[2]) * u);
     C[6 * i] = C[6 * i + 3] = r; C[6 * i + 1] = C[6 * i + 4] = g; C[6 * i + 2] = C[6 * i + 5] = b;
   }
