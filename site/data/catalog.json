@@ -1,54 +1,6 @@
 {
  "clips": [
   {
-   "id": "walk_turn",
-   "title": "Walk and turn",
-   "group": "walk",
-   "seconds": 11.2,
-   "video_s": 11.27,
-   "fell_s": null,
-   "source": "our lab",
-   "source_url": "",
-   "width": 480,
-   "height": 854,
-   "file": "data/clips/walk_turn.elvw",
-   "video": "data/video/walk_turn.mp4",
-   "poster": "data/video/walk_turn.jpg",
-   "bytes": 1825072
-  },
-  {
-   "id": "arm_raise",
-   "title": "Arm raises",
-   "group": "task",
-   "seconds": 8.68,
-   "video_s": 8.73,
-   "fell_s": null,
-   "source": "our lab",
-   "source_url": "",
-   "width": 480,
-   "height": 854,
-   "file": "data/clips/arm_raise.elvw",
-   "video": "data/video/arm_raise.mp4",
-   "poster": "data/video/arm_raise.jpg",
-   "bytes": 1415568
-  },
-  {
-   "id": "walk_reach",
-   "title": "Walk and reach",
-   "group": "walk",
-   "seconds": 12.74,
-   "video_s": 12.8,
-   "fell_s": null,
-   "source": "our lab",
-   "source_url": "",
-   "width": 480,
-   "height": 854,
-   "file": "data/clips/walk_reach.elvw",
-   "video": "data/video/walk_reach.mp4",
-   "poster": "data/video/walk_reach.jpg",
-   "bytes": 2075360
-  },
-  {
    "id": "knee_lift",
    "title": "Walk and knee lift",
    "group": "task",
@@ -62,7 +14,8 @@
    "file": "data/clips/knee_lift.elvw",
    "video": "data/video/knee_lift.mp4",
    "poster": "data/video/knee_lift.jpg",
-   "bytes": 1792584
+   "bytes": 1792584,
+   "order": 0
   },
   {
    "id": "walk_around",
@@ -78,7 +31,59 @@
    "file": "data/clips/walk_around.elvw",
    "video": "data/video/walk_around.mp4",
    "poster": "data/video/walk_around.jpg",
-   "bytes": 1516352
+   "bytes": 1516352,
+   "order": 1
+  },
+  {
+   "id": "walk_turn",
+   "title": "Walk and turn",
+   "group": "walk",
+   "seconds": 11.2,
+   "video_s": 11.27,
+   "fell_s": null,
+   "source": "our lab",
+   "source_url": "",
+   "width": 480,
+   "height": 854,
+   "file": "data/clips/walk_turn.elvw",
+   "video": "data/video/walk_turn.mp4",
+   "poster": "data/video/walk_turn.jpg",
+   "bytes": 1825072,
+   "order": 2
+  },
+  {
+   "id": "walk_reach",
+   "title": "Walk and reach",
+   "group": "walk",
+   "seconds": 12.74,
+   "video_s": 12.8,
+   "fell_s": null,
+   "source": "our lab",
+   "source_url": "",
+   "width": 480,
+   "height": 854,
+   "file": "data/clips/walk_reach.elvw",
+   "video": "data/video/walk_reach.mp4",
+   "poster": "data/video/walk_reach.jpg",
+   "bytes": 2075360,
+   "order": 3
+  },
+  {
+   "id": "arm_raise",
+   "title": "Arm raises",
+   "group": "task",
+   "seconds": 8.68,
+   "video_s": 8.73,
+   "fell_s": null,
+   "source": "our lab",
+   "source_url": "",
+   "width": 480,
+   "height": 854,
+   "file": "data/clips/arm_raise.elvw",
+   "video": "data/video/arm_raise.mp4",
+   "poster": "data/video/arm_raise.jpg",
+   "bytes": 1415568,
+   "order": 4
   }
  ]
 }

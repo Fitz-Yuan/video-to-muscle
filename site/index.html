@@ -544,7 +544,7 @@ function loop() {
   $("loading").classList.add("on");
   const [_, cat] = await Promise.all([loadModel(), fetch("data/catalog.json", { cache: "no-store" }).then(r => r.json())]);
   const order = { task: 0, walk: 1, jog: 2 };
-  catalog = cat.clips.filter(c => !c.hidden).sort((x, y) => (order[x.group] - order[y.group]) || (x.order ?? 0) - (y.order ?? 0));
+  catalog = cat.clips.filter(c => !c.hidden).sort((x, y) => (x.order ?? 99) - (y.order ?? 99) || (order[x.group] - order[y.group]));
   for (const b of $("filterSeg").children) b.hidden = b.dataset.g !== "all" && !catalog.some(c => c.group === b.dataset.g);
   const src = [...new Set(catalog.map(c => c.source))];
   if (src.length) $("credits").textContent = src.join(" and ");
