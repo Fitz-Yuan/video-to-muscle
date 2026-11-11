@@ -66,7 +66,7 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .tag em { font-style: normal; color: #ff6b5e; }
 .legend { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: flex; align-items: center; gap: 8px;
   font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #c9c6c0; }
-.legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #d1c9c7, #e0262c); }
+.legend span.bar { width: 74px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #a5686c, #f2141a); }
 .effort { position: absolute; left: 12px; bottom: 12px; top: auto; z-index: 2; width: 3px; height: 64px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
 .effort i { position: absolute; left: 0; right: 0; bottom: 0; background: #e0262c; transition: height 0.08s linear; }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
@@ -350,8 +350,8 @@ function setMuscles(P, Q, f, ps) {
   for (let i = 0; i < segSites.length; i++) { const s = 3 * segSites[i]; A[3 * i] = W[s]; A[3 * i + 1] = W[s + 1]; A[3 * i + 2] = W[s + 2]; }
   musBuf.needsUpdate = true;
 }
-// activation colour: grey at rest -> red when fully active (as the results viewer and the MuJoCo renderer)
-const REST = [0.82, 0.79, 0.78], HOT = [0.72, 0.03, 0.05];
+// activation colour: dusty rose at rest (apart from the ivory bones) -> bright red when fully active
+const REST = [0.42, 0.19, 0.21], HOT = [0.95, 0.01, 0.02];
 function colourMuscles(f) {
   const mu = clip.meta.muscle_act, A = clip.a[mu.array].data, n = mu.muscles.length;
   const map = clip.musMap ??= (() => { const ix = new Map(mu.muscles.map((nm, i) => [nm, i])); return Int32Array.from(model.meta.muscles, m => ix.get(m.name) ?? -1); })();
