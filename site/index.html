@@ -169,6 +169,10 @@ footer { max-width: 1180px; margin: clamp(56px, 10vh, 110px) auto 0; padding: 22
 .step h3 { font-weight: 700; font-size: 17px; }
 .step p { font-size: 15px; }
 footer { color: var(--muted); font-size: 14px; }
+/* ambient glow: each pane's current picture, blurred and spread past its border */
+.glow { position: absolute; z-index: 0; pointer-events: none; filter: blur(36px) saturate(1.5); opacity: 0.6; transform: scale(1.07); transition: opacity 0.4s; }
+.stage > .pane { z-index: 1; }
+@media (prefers-reduced-motion: reduce) { .glow { display: none; } }
 </style>
 <script type="importmap">
 { "imports": {
@@ -191,6 +195,8 @@ footer { color: var(--muted); font-size: 14px; }
 
   <section class="stage-wrap">
     <div class="stage" id="stage">
+      <canvas class="glow" id="glowV" width="48" height="48" aria-hidden="true"></canvas>
+      <canvas class="glow" id="glowS" width="48" height="48" aria-hidden="true"></canvas>
       <div class="pane" id="paneVideo">
         <div class="tag">Video</div>
         <video id="video" muted playsinline preload="auto" crossorigin="anonymous"></video>
@@ -476,6 +482,19 @@ function layout() {
   renderer.domElement.style.width = `${sw}px`; renderer.domElement.style.height = `${sh}px`;
   musMat.resolution.set(sw, sh); actMat.resolution.set(sw, sh);
   camera.aspect = sw / sh; camera.updateProjectionMatrix();
+  for (const [g, pane] of [[$("glowV"), paneVideo], [$("glowS"), paneSim]]) {  // glow sits right under its pane
+    g.style.left = `${pane.offsetLeft}px`; g.style.top = `${pane.offsetTop}px`;
+    g.style.width = `${pane.offsetWidth}px`; g.style.height = `${pane.offsetHeight}px`;
+  }
+}
+let glowTick = 0;
+function drawGlow() {  // a few times a second is enough for a blurred halo
+  if (++glowTick % 4) return;
+  try {
+    const gv = $("glowV").getContext("2d"), gs = $("glowS").getContext("2d");
+    if (video.readyState >= 2) gv.drawImage(video, 0, 0, 48, 48);
+    gs.drawImage(renderer.domElement, 0, 0, 48, 48);
+  } catch { /* a frame that cannot be read leaves the last glow */ }
 }
 addEventListener("resize", layout);
 
@@ -591,6 +610,7 @@ function loop() {
   if (viewMode === "orbit") controls.update();
   sky.position.copy(camera.position);
   renderer.render(scene, camera);
+  drawGlow();
 }
 
 (async () => {
